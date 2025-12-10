@@ -1,9 +1,9 @@
-import lucene
-from org.apache.lucene.analysis.standard import StandardAnalyzer
-from org.apache.lucene.document import Document, Field, StringField, TextField, StoredField, IntPoint
-from org.apache.lucene.index import IndexWriter, IndexWriterConfig
-from org.apache.lucene.store import MMapDirectory
-from java.nio.file import Paths
+import lucene # type: ignore
+from org.apache.lucene.analysis.standard import StandardAnalyzer # type: ignore
+from org.apache.lucene.document import Document, Field, StringField, TextField, StoredField, IntPoint # type: ignore
+from org.apache.lucene.index import IndexWriter, IndexWriterConfig # type: ignore
+from org.apache.lucene.store import MMapDirectory # type: ignore
+from java.nio.file import Paths # type: ignore
 import os
 
 from pyspark.sql import SparkSession, functions as F
@@ -19,6 +19,7 @@ def doc_from_row(row):
     doc.add(TextField("name", get("name"), Field.Store.YES))
     doc.add(TextField("sport_text", get("sport"), Field.Store.NO))
     doc.add(TextField("country_text", get("country"), Field.Store.NO))
+    doc.add(TextField("first_games_text", get("first_games"), Field.Store.NO))
 
     # chybajuce nepridavam do dokument indexu pre lepsi search
     wiki_sport = get("wiki_sport").strip()
@@ -40,14 +41,13 @@ def doc_from_row(row):
     doc.add(TextField("lookup_texts", " ".join(lookup_texts), Field.Store.NO))
 
     # exact match atributy
-    doc.add(StringField("id", get("ath_name_norm"), Field.Store.YES))
+    doc.add(StringField("id", get("name"), Field.Store.YES))
     doc.add(StringField("country", get("country"), Field.Store.YES))
     doc.add(StringField("sport", get("sport"), Field.Store.YES))
     doc.add(StringField("first_games", get("first_games"), Field.Store.YES))
-    doc.add(StringField("participations", get("participations"), Field.Store.YES))
 
     # ciselne atributy
-    for integers in ["gold", "silver", "bronze", "yob"]:
+    for integers in ["gold", "silver", "bronze", "yob", "participations"]:
         val = int(get(integers, "0") or 0)
         doc.add(IntPoint(integers, val))
         doc.add(StoredField(integers, val))

@@ -37,6 +37,7 @@ def build_wiki(spark, wiki_dump_path):
 
     def clean(col):
         col = F.regexp_replace(col, r"(?s)<ref[^>]*>.*?</ref>", " ") # <ref> ... </ref>
+        col = F.regexp_replace(col, r"(?i)<ref[^/>]*>", " ") # <ref>
         col = F.regexp_replace(col, r"(?i)<ref[^/>]*/>", " ") # <ref/>
         col = F.regexp_replace(col, r"(?s)\{\{.*?\}\}", " ") # {{...}}
         col = F.regexp_replace(col, r"\{\{.*", " ") # {{...
@@ -63,7 +64,7 @@ def build_wiki(spark, wiki_dump_path):
     bio = F.regexp_replace(bio, r"(?s)\{\{.*?\}\}", " ") # {{...}}
     bio = F.regexp_replace(bio, r"<!--.*?-->", " ")
     bio = F.regexp_replace(bio, r"&[a-z]+;", " ") # nbsp
-    bio = F.regexp_replace(bio, r"(?m)^==[^=].*?==$", " ") # nadpisy
+    bio = F.regexp_replace(bio, r"(?m)^\s*={1,6}\s*[^=]+?\s*={1,6}\s*$", " ") # nadpisy
     bio = F.regexp_replace(bio, r"\[\[([^|\]]+)\|([^\]]+)\]\]", r"$2") # rovnako ako v clean()
     bio = F.regexp_replace(bio, r"\[\[([^\]]+)\]\]", r"$1") # zvysky
     bio = F.regexp_replace(bio, r"[{}'\"|]+", " ")

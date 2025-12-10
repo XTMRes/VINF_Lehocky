@@ -2,7 +2,7 @@ import json, argparse, csv, re
 from collections import Counter
 import unicodedata
 import re, shlex, operator
-
+import time
 TOKEN = re.compile(r"\w+", re.UNICODE)
 OPS = {">": operator.gt, ">=": operator.ge, "<": operator.lt, "<=": operator.le, "=": operator.eq, "==": operator.eq}
 
@@ -138,6 +138,7 @@ def search_athletes(athletes, query, topk=10):
 
 def search_loop(docid_to_url, athletes, index, rank, k):
     query = input("OASIS Search > ").strip()
+    start = time.perf_counter()
 
     if query.lower().startswith("q:"):
         return True
@@ -145,19 +146,24 @@ def search_loop(docid_to_url, athletes, index, rank, k):
     if query.lower().startswith("ath:"): # iba athlete vyhladavanie
         query = query[4:].strip()
         print(f"\nTop {k} results for: \"{query}\"\n")
-        for score, a in search_athletes(athletes, query, topk=k):
+        scored_athletes = search_athletes(athletes, query, topk=k)
+        elapsed = (time.perf_counter() - start) * 1000
+        print(f"Query time: {elapsed:.2f}ms\n")
+        for score, a in scored_athletes:
             print(f"{a['name']}\t{score:.3f}\n"
                 f"Country: {a['country']} | Sport: {a['sport']} | " f"Medals: G{a.get('gold',0)}/S{a.get('silver',0)}/B{a.get('bronze',0)}\n"
                 f"Link: {a.get('url','')}\n")
         return False
 
     q_terms = tokenize(query)
-    print(f"\nTop {k} results for: \"{query}\"\n")
+    print(f"\nTop {k} results for: \"{query}\"")
 
     scores = score_bm25(q_terms, index) if rank == "bm25" else score_tfidf(q_terms, index)
     top = scores.most_common(k)
 
+    elapsed = (time.perf_counter() - start) * 1000
     # Výsledky podľa skóre
+    print(f"Query time: {elapsed:.2f}ms\n")
     for i, (doc_id, score) in enumerate(top, 1): 
         url = docid_to_url.get(str(doc_id), "")
         print(f"{i}. {doc_id}\t{score:.3f}\nLink: {url}\n")
